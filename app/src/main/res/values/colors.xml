@@ -1,0 +1,6 @@
+<resources>
+    <color name="colorPrimary">#FFC1E3</color> <!-- Soft Pink -->
+    <color name="colorPrimaryVariant">#FFA6C9</color>
+    <color name="colorSecondary">#A7C7E7</color> <!-- Soft Blue -->
+    <color name="colorAccent">#FFB6C1</color> <!-- Light Pink -->
+</resources>
