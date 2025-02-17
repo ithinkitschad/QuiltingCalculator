@@ -1,8 +1,9 @@
 package com.chadsprojects.quiltingcalculator.ui.theme
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
@@ -16,7 +17,7 @@ private val DarkColorScheme = darkColorScheme(
 private val LightColorScheme = lightColorScheme(
     primary = Color(0xFFFF99C8),
     secondary = Color(0xFFD81B60),
-    background = Color(0x66F06292), // Apply transparency here too
+    background = Color(0x66F06292),
     onPrimary = Color.Black
 )
 

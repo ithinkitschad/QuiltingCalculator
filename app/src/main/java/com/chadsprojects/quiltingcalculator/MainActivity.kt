@@ -43,6 +43,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -60,6 +61,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -67,11 +69,14 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.chadsprojects.quiltingcalculator.ui.theme.QuiltingCalculatorTheme
+import com.google.android.gms.ads.AdSize
+import com.google.android.gms.ads.MobileAds
+import com.google.android.gms.ads.admanager.AdManagerAdRequest
+import com.google.android.gms.ads.admanager.AdManagerAdView
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -84,51 +89,77 @@ val Context.dataStore by preferencesDataStore(name = "journal_notes")
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        MobileAds.initialize(this) {}
+
         setContent {
             QuiltingCalculatorTheme {
                 val navController = rememberNavController()
 
-                Box(
+                Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .background(
                             brush = Brush.verticalGradient(
                                 colors = listOf(
-                                    Color(0xFFFF4081), // Soft pastel pink (Top)
-                                    Color(0xFFFF99C8)  // Richer pink (Bottom)
+                                    Color(0xFFFF4081),
+                                    Color(0xFFFF99C8)
                                 )
                             )
                         )
                 ) {
-                    NavHost(
-                        navController = navController,
-                        startDestination = "calculator"
+                    Box(
+                        modifier = Modifier.weight(1f)
                     ) {
-                        composable("calculator") { CourtneyCalculatorTabs(navController) }
-                        composable("journal") { JournalScreen(navController) }
+                        NavHost(
+                            navController = navController,
+                            startDestination = "calculator"
+                        ) {
+                            composable("calculator") { CourtneyCalculatorTabs() }
+                            composable("journal") { JournalScreen(navController) }
+                        }
+
+                        FloatingActionButton(
+                            onClick = { navController.navigate("journal") },
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .padding(16.dp)
+                                .shadow(8.dp, shape = CircleShape),
+                            containerColor = Color(0xFFD81B60),
+                            contentColor = Color.White
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.NoteAdd,
+                                contentDescription = "Open Journal"
+                            )
+                        }
                     }
 
-                    // ✅ Single Floating Button (Fixed)
-                    FloatingActionButton(
-                        onClick = { navController.navigate("journal") },
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .padding(16.dp)
-                            .shadow(8.dp, shape = CircleShape), // 3D effect
-                        containerColor = Color(0xFFD81B60),
-                        contentColor = Color.White
-                    ) {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.NoteAdd, contentDescription = "Open Journal")
-                    }
+                    BannerAdView()
                 }
             }
         }
     }
 }
+    @Composable
+fun BannerAdView() {
+    AndroidView(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(50.dp),
+        factory = { context ->
+            AdManagerAdView(context).apply {
+                setAdSize(AdSize.BANNER)
+                adUnitId = "ca-app-pub-4438014143794059/8766587353"
+                loadAd(AdManagerAdRequest.Builder().build())
+            }
+        }
+    )
+}
 
 @Composable
-fun CourtneyCalculatorTabs(navController: NavHostController) {
-    var selectedTab by remember { mutableStateOf(0) }
+fun CourtneyCalculatorTabs() {
+    var selectedTab by remember { mutableIntStateOf(0) }
     val tabs = listOf("Binding", "Backing", "Blocks", "Fabric")
 
     Column(
@@ -144,7 +175,6 @@ fun CourtneyCalculatorTabs(navController: NavHostController) {
             contentScale = ContentScale.Fit
         )
 
-        // ✅ FIXED: Tabs now evenly distribute without weird text wrapping
         Card(
             shape = RoundedCornerShape(12.dp),
             elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
@@ -154,7 +184,7 @@ fun CourtneyCalculatorTabs(navController: NavHostController) {
         ) {
             TabRow(
                 selectedTabIndex = selectedTab,
-                modifier = Modifier.height(48.dp), // ✅ Fixed tab height for consistency
+                modifier = Modifier.height(48.dp),
                 containerColor = Color(0xFF885D69),
                 contentColor = Color.White,
                 indicator = { tabPositions ->
@@ -176,13 +206,13 @@ fun CourtneyCalculatorTabs(navController: NavHostController) {
                         selected = selectedTab == index,
                         onClick = { selectedTab = index },
                         modifier = Modifier
-                            .fillMaxWidth()  // ✅ Ensures all tabs take equal width
-                            .weight(1f)      // ✅ Distributes tabs evenly
+                            .fillMaxWidth()
+                            .weight(1f)
                             .clip(RoundedCornerShape(10.dp))
                             .background(
                                 if (selectedTab == index) Color(0xFFB67C8D) else Color.Transparent
                             )
-                            .padding(vertical = 8.dp), // ✅ Ensures text stays centered
+                            .padding(vertical = 8.dp),
                         text = {
                             Text(
                                 title,
@@ -197,14 +227,13 @@ fun CourtneyCalculatorTabs(navController: NavHostController) {
             }
         }
 
-        // ✅ FIXED: No weird background layering
         Box(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
         ) {
             when (selectedTab) {
-                0 -> BindingCalculator(navController)
+                0 -> BindingCalculator()
                 1 -> BackingBattingCalculator()
                 2 -> BlockYardageCalculator()
                 3 -> FabricCalculator()
@@ -223,37 +252,37 @@ fun StyledOutlinedTextField(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 4.dp) // 🔹 Reduced vertical spacing
-            .shadow(6.dp, shape = RoundedCornerShape(16.dp)) // 🔹 Softer shadow with full rounded corners
-            .background(Color(0xFFB67C8D), shape = RoundedCornerShape(16.dp)) // 🔹 Fully rounded transparent box
-            .padding(8.dp) // 🔹 Less padding inside for a compact look
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+            .shadow(6.dp, shape = RoundedCornerShape(16.dp))
+            .background(Color(0xFFB67C8D), shape = RoundedCornerShape(16.dp))
+            .padding(8.dp)
     ) {
         Text(
             text = label,
             fontSize = 16.sp,
             fontWeight = FontWeight.SemiBold,
             color = Color.Black,
-            modifier = Modifier.padding(start = 8.dp, bottom = 4.dp) // 🔹 Adjusted label spacing
+            modifier = Modifier.padding(start = 8.dp, bottom = 4.dp)
         )
 
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
             textStyle = TextStyle(fontSize = 18.sp, color = Color.Black),
-            shape = RoundedCornerShape(16.dp), // 🔹 Fully rounded text field corners
+            shape = RoundedCornerShape(16.dp),
             colors = TextFieldDefaults.colors(
                 focusedTextColor = Color.Black,
                 unfocusedTextColor = Color.Black,
                 cursorColor = Color.Black,
                 focusedContainerColor = Color.White,
                 unfocusedContainerColor = Color.White,
-                focusedIndicatorColor = Color(0xFFD81B60), // 🔹 Soft pink indicator (Matches theme)
+                focusedIndicatorColor = Color(0xFFD81B60),
                 unfocusedIndicatorColor = Color.LightGray
             ),
             keyboardOptions = KeyboardOptions.Default.copy(keyboardType = keyboardType),
             modifier = Modifier
                 .fillMaxWidth()
-                .shadow(2.dp, RoundedCornerShape(16.dp)) // 🔹 Softer shadow directly on text field
+                .shadow(2.dp, RoundedCornerShape(16.dp))
         )
     }
 }
@@ -295,20 +324,20 @@ fun CopyableResultText(resultText: String) {
     }
 }
 
-
+// BINDING CALCULATOR
 @Composable
-fun BindingCalculator(navController: Any) { // ✅ Accepts navController for navigation
+fun BindingCalculator() {
     var quiltWidth by remember { mutableStateOf("") }
     var quiltHeight by remember { mutableStateOf("") }
-    var bindingStripWidth by remember { mutableStateOf("2.5") } // Default to 2.5 inches
-    var fabricWidth by remember { mutableStateOf("43") } // Default usable fabric width
-    var overage by remember { mutableStateOf("10") } // Standard extra for seams & corners
+    var bindingStripWidth by remember { mutableStateOf("2.5") }
+    var fabricWidth by remember { mutableStateOf("43") }
+    var overage by remember { mutableStateOf("10") }
     var resultText by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState()) // ✅ Enables scrolling when content is too long
+            .verticalScroll(rememberScrollState())
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -373,7 +402,7 @@ fun BindingCalculator(navController: Any) { // ✅ Accepts navController for nav
 
         CopyableResultText(resultText)
 
-        Spacer(modifier = Modifier.height(24.dp)) // Ensures last text isn't cut off
+        Spacer(modifier = Modifier.height(24.dp))
     }
 }
 
@@ -388,13 +417,10 @@ fun calculateBinding(
         return "Please enter valid values."
     }
 
-    // **Step 1:** Compute total binding length (quilt perimeter + overage buffer)
     val totalBindingLength = 2 * (quiltWidth + quiltHeight) + overage
 
-    // **Step 2:** Compute number of strips needed
     val numberOfStrips = kotlin.math.ceil(totalBindingLength / fabricWidth)
 
-    // **Step 3:** Compute total fabric required (convert inches to yards)
     val totalFabricRequired = (numberOfStrips * bindingStripWidth) / 36.0
 
     return """
@@ -404,19 +430,19 @@ fun calculateBinding(
     """.trimIndent().format(totalBindingLength, numberOfStrips, totalFabricRequired)
 }
 
-// ✅ BACKING & BATTING CALCULATOR
+// BACKING & BATTING CALCULATOR
 @Composable
 fun BackingBattingCalculator() {
-    var fabricWidth by remember { mutableStateOf("43") } // Default fabric width
+    var fabricWidth by remember { mutableStateOf("43") }
     var quiltWidth by remember { mutableStateOf("") }
     var quiltLength by remember { mutableStateOf("") }
-    var overage by remember { mutableStateOf("8") } // Default overage (extra fabric allowance)
+    var overage by remember { mutableStateOf("8") }
     var resultText by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState()) // ✅ Ensures scrollability
+            .verticalScroll(rememberScrollState())
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -452,7 +478,6 @@ fun BackingBattingCalculator() {
         Spacer(modifier = Modifier.height(16.dp))
 
         CopyableResultText(resultText)
-
     }
 }
 
@@ -466,7 +491,7 @@ fun InputField(value: String, label: String, onValueChange: (String) -> Unit) {
 }
 
 
-// ✅ BACKING & BATTING CALCULATION FUNCTION
+//BACKING & BATTING CALCULATION FUNCTION
 fun calculateBackingBatting(fabricWidth: Double, quiltWidth: Double, quiltLength: Double, overage: Double): String {
     val adjustedWidth = quiltWidth + (overage * 2)
     val adjustedLength = quiltLength + (overage * 2)
@@ -494,7 +519,7 @@ fun calculateBackingBatting(fabricWidth: Double, quiltWidth: Double, quiltLength
     """.trimIndent()
 }
 
-// ✅ FRACTION CONVERSION FUNCTION
+//FRACTION CONVERSION FUNCTION
 fun convertToFraction(value: Double): String {
     val fractions = mapOf(
         0.125 to "1/8", 0.25 to "1/4", 0.375 to "3/8", 0.5 to "1/2",
@@ -515,19 +540,19 @@ fun convertToFraction(value: Double): String {
     }
 }
 
-// ✅ BLOCK YARDAGE CALCULATOR - Calculates total fabric yardage needed
+//BLOCK YARDAGE CALCULATOR - Calculates total fabric yardage needed
 @Composable
 fun BlockYardageCalculator() {
     var blockWidth by remember { mutableStateOf("") }
     var blockHeight by remember { mutableStateOf("") }
     var numBlocks by remember { mutableStateOf("") }
-    var fabricWidth by remember { mutableStateOf("43") } // Default usable fabric width
+    var fabricWidth by remember { mutableStateOf("43") }
     var resultText by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState()) // ✅ Ensures scrollability
+            .verticalScroll(rememberScrollState())
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -576,7 +601,7 @@ fun InputField(value: String, label: String, keyboardType: KeyboardType = Keyboa
     )
 }
 
-// ✅ BLOCK YARDAGE CALCULATION FUNCTION
+//BLOCK YARDAGE CALCULATION FUNCTION
 fun calculateBlockYardage(
     blockWidth: Double,
     blockHeight: Double,
@@ -607,9 +632,7 @@ fun calculateBlockYardage(
     """.trimIndent()
 }
 
-
-
-// ✅ FABRIC CALCULATOR - Determines how many pieces can be cut from a fabric section
+//FABRIC CALCULATOR - Determines how many pieces can be cut from a fabric section
 @Composable
 fun FabricCalculator() {
     var fabricWidth by remember { mutableStateOf("") }
@@ -621,7 +644,7 @@ fun FabricCalculator() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState()) // ✅ Ensures independent scrolling
+            .verticalScroll(rememberScrollState())
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -660,7 +683,7 @@ fun FabricCalculator() {
     }
 }
 
-// ✅ FABRIC USAGE CALCULATION FUNCTION
+//FABRIC USAGE CALCULATION FUNCTION
 fun calculateFabricUsage(
     fabricWidth: Double,
     fabricLength: Double,
@@ -706,8 +729,8 @@ fun JournalScreen(
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFFFF4081), // Soft pastel pink (Top)
-                        Color(0xFFFF99C8)  // Richer pink (Bottom)
+                        Color(0xFFFF4081),
+                        Color(0xFFFF99C8)
                     )
                 )
             )
@@ -733,7 +756,7 @@ fun JournalScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(8.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color(0x74746D77)) // Match card colors
+                        colors = CardDefaults.cardColors(containerColor = Color(0x74746D77))
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             if (isEditing) {

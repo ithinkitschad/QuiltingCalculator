@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "com.chadsprojects.quiltingcalculator"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.chadsprojects.quiltingcalculator"
@@ -38,7 +38,7 @@ android {
     }
 
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.11"  // Updated for Kotlin 1.9.22
+        kotlinCompilerExtensionVersion = "1.5.11"
     }
 
     packagingOptions {
@@ -47,26 +47,24 @@ android {
 }
 
 dependencies {
-    implementation("androidx.core:core-ktx:1.9.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
-    implementation("androidx.activity:activity-compose:1.6.1")
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.activity.compose)
 
-    // Updated Compose dependencies
-    implementation("androidx.compose.ui:ui:1.5.4")
-    implementation("androidx.compose.material3:material3:1.2.1")
-    implementation("androidx.compose.ui:ui-tooling-preview:1.5.4")
-    debugImplementation("androidx.compose.ui:ui-tooling:1.5.4")
+    implementation(libs.androidx.ui.v154)
+    implementation(libs.androidx.material3.v121)
+    implementation(libs.androidx.ui.tooling.preview.v154)
+    implementation(libs.play.services.ads.lite)
+    debugImplementation(libs.androidx.ui.tooling.v154)
 
-    // Material Components (Ensures UI Theme Support)
-    implementation("com.google.android.material:material:1.10.0")
+    implementation(libs.material)
 
-    // Testing
-    testImplementation("junit:junit:4.13.2")
-    androidTestImplementation("androidx.test.ext:junit:1.1.5")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
 
-    implementation ("androidx.datastore:datastore-preferences:1.0.0")
-    implementation ("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1")
-    implementation ("androidx.navigation:navigation-compose:2.6.0")
-    implementation ("androidx.compose.material:material-icons-extended:1.5.0")
+    implementation (libs.androidx.datastore.preferences)
+    implementation (libs.androidx.lifecycle.viewmodel.compose)
+    implementation (libs.androidx.navigation.compose)
+    implementation (libs.androidx.material.icons.extended)
 }
